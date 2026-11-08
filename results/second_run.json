@@ -1,0 +1,15 @@
+{
+  "test": "Zweiter Lauf mit den neun ursprünglichen Nachrichten",
+  "nachweis": "Beobachtung aus gespeichertem Tabellenstand und Screenshots, kein Roh-Export der n8n-Ausführung",
+  "eingaben": 9,
+  "bekannte_nachrichten_ids": 8,
+  "uebersprungene_eingaenge": 9,
+  "neue_gespeicherte_ergebnisse": 0,
+  "tabellenzeilen_vorher": 8,
+  "tabellenzeilen_nachher": 8,
+  "status": "bestanden",
+  "screenshots": [
+    "04_zweiter_lauf_alle_duplikate.png",
+    "05_zweiter_lauf_weiterhin_acht.png"
+  ]
+}

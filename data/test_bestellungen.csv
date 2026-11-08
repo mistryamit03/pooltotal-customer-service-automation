@@ -1,0 +1,7 @@
+bestellnummer,kundenadresse,kanal,datenstand,abfrage_status
+TEST-1001,max@kunde.example,JTL-Shop,1 Poolpumpe bestellt und versendet. Versandstatus: unterwegs. Tracking: TEST-DHL-1001.,ok
+TEST-1002,lea@kunde.example,Amazon,1 Filter und 2 Schläuche bestellt. Nur der Filter ist versendet. Tracking: TEST-GLS-1002. Für die Schläuche ist kein Versand hinterlegt.,ok
+TEST-1003,nora@kunde.example,eBay,1 Poolabdeckung bestellt und versendet. Versandstatus: unterwegs. Tracking: TEST-DHL-1003.,ok
+TEST-1004,,,Der Bestell-Lookup liefert einen technischen Timeout. Es stehen keine Bestelldaten zur Verfügung.,timeout
+TEST-1005,mia@kunde.example,Kaufland,1 Kescher bestellt und versendet. Versandstatus: zugestellt. Tracking: TEST-DHL-1005.,ok
+TEST-1006,paul@kunde.example,JTL-Shop,1 Saunaduft bestellt und bezahlt. Bestellstatus: offen. Noch kein Versand hinterlegt.,ok

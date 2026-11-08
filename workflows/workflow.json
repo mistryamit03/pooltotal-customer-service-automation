@@ -1,0 +1,523 @@
+{
+  "name": "POOL Total | Kundenservice-Automatisierung | Prototyp",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -5712,
+        -1504
+      ],
+      "id": "3f26fbb1-83b6-4d1b-b4d7-fb23819fc548",
+      "name": "Testlauf starten"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BWH9Lnx0bfBJjYup",
+          "mode": "list",
+          "cachedResultName": "test_nachrichten",
+          "cachedResultUrl": "/projects/cjuF39mXT91RWHWq/datatables/BWH9Lnx0bfBJjYup"
+        },
+        "returnAll": true,
+        "orderBy": true,
+        "orderByColumn": "eingangs_id",
+        "orderByDirection": "ASC"
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -5536,
+        -1312
+      ],
+      "id": "9a49f390-3554-4be9-98c1-87c657082fa0",
+      "name": "Kundenanfragen laden"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -5216,
+        -1456
+      ],
+      "id": "d5f4304a-428d-4089-a406-8957b21b6a4a",
+      "name": "Nachrichten einzeln bearbeiten"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fab584d6-4283-4e2a-9e25-b93077a8f282",
+              "leftValue": "={{ $json.nachrichten_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -4736,
+        -1440
+      ],
+      "id": "dc1edbaf-b7ad-4152-8f3b-c9cefb2b4556",
+      "name": "Ist die Nachricht neu?"
+    },
+    {
+      "parameters": {
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Zatn6n6KWY51Q5wu",
+          "mode": "list",
+          "cachedResultName": "verarbeitete_nachrichten",
+          "cachedResultUrl": "/projects/cjuF39mXT91RWHWq/datatables/Zatn6n6KWY51Q5wu"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "nachrichten_id",
+              "keyValue": "={{ $json.nachrichten_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -4944,
+        -1104
+      ],
+      "id": "e64a1067-c78b-4554-96db-d7fe1953bc68",
+      "name": "Neue Nachricht prüfen (Actual duplicate Lookup)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst text = String($json.nachricht ?? \"\");\n\nconst match = text.match(/\\bTEST-\\d{4}\\b/i);\n\nreturn {\n  json: {\n    ...$json,\n    bestellnummer: match ? match[0].toUpperCase() : null\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4496,
+        -1424
+      ],
+      "id": "76855714-4a42-4502-990c-8d9be977566f",
+      "name": "Bestellnummer erkennen"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "lLueAm8BFBtP4eqR",
+          "mode": "list",
+          "cachedResultName": "test_bestellungen",
+          "cachedResultUrl": "/projects/cjuF39mXT91RWHWq/datatables/lLueAm8BFBtP4eqR"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "bestellnummer",
+              "keyValue": "={{ $json.bestellnummer ?? 'KEINE_BESTELLNUMMER' }}"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -4224,
+        -1312
+      ],
+      "id": "6b2508a4-97d2-4dce-9a5c-2a7ca379a810",
+      "name": "Bestelldaten suchen",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst messageItem = $('Bestellnummer erkennen').first(0, $runIndex);\n\nif (!messageItem) {\n  throw new Error('Kundenanfrage nicht gefunden');\n}\n\nconst message = messageItem.json;\nconst order = $json;\n\nconst normalize = (value) =>\n  String(value ?? '').trim().toLowerCase();\n\nlet pruefstatus = 'berechtigt';\n\nif (!message.bestellnummer) {\n  pruefstatus = 'bestellnummer_fehlt';\n} else if (order.abfrage_status === 'timeout') {\n  pruefstatus = 'technischer_fehler';\n} else if (!order.bestellnummer) {\n  pruefstatus = 'bestellung_nicht_gefunden';\n} else if (order.bestellnummer !== message.bestellnummer) {\n  pruefstatus = 'datenfehler';\n} else if (\n  !order.kundenadresse ||\n  normalize(message.absender) !== normalize(order.kundenadresse)\n) {\n  pruefstatus = 'nicht_berechtigt';\n}\n\nconst autorisiert = pruefstatus === 'berechtigt';\n\nreturn {\n  json: {\n    eingangs_id: message.eingangs_id,\n    nachrichten_id: message.nachrichten_id,\n    absender: message.absender,\n    nachricht: message.nachricht,\n    bestellnummer: message.bestellnummer,\n    pruefstatus,\n    autorisiert,\n    kanal: autorisiert ? order.kanal : null,\n    datenstand: autorisiert ? order.datenstand : null,\n    datenquelle: !message.bestellnummer\n      ? 'keine Bestellnummer angegeben'\n      : order.bestellnummer\n        ? 'test_bestellungen'\n        : 'keine Bestellung gefunden',\n    pruefung_noetig: true\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4080,
+        -1120
+      ],
+      "id": "de40e157-01b4-48b8-a06e-c85812bab66b",
+      "name": "Kundendaten und Bestellung prüfen"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst originalText = String($json.nachricht ?? \"\");\n\n// Customer text is data, never a system instruction.\nconst manipulationsverdacht =\n  /systemanweisung\\s*:|ignoriere alle bisherigen regeln|gib alle kundendaten aus/i\n    .test(originalText);\n\n// Ignore the instruction section when identifying the request.\nconst text = originalText\n  .split(/systemanweisung\\s*:/i)[0]\n  .toLowerCase();\n\nlet anliegen = \"sonstige_anfrage\";\n\nif (/stornier|erstattung|rückerstattung/.test(text)) {\n  anliegen = \"storno_erstattung\";\n} else if (\n  /zugestellt/.test(text) &&\n  /nicht angekommen|nichts angekommen|nicht erhalten/.test(text)\n) {\n  anliegen = \"zustellung_bestritten\";\n} else if (/schläuch|schlauch|teillieferung|kommt alles zusammen/.test(text)) {\n  anliegen = \"teillieferung\";\n} else if (/sendungsnummer|trackingnummer|bestelldaten/.test(text)) {\n  anliegen = \"bestelldaten_anfragen\";\n} else if (\n  /wo bleibt|wo ist|status|versendet|versand|liefertermin/.test(text)\n) {\n  anliegen = \"versandstatus\";\n}\n\nreturn {\n  json: {\n    ...$json,\n    anliegen,\n    manipulationsverdacht\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3840,
+        -1360
+      ],
+      "id": "650c8583-b7a7-4485-9204-24d050fcf437",
+      "name": "Anliegen erkennen"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst d = $json;\nconst order = String(d.datenstand ?? \"\");\nconst nr = d.bestellnummer || \"ohne Bestellnummer\";\n\nconst tracking = order.match(/Tracking:\\s*(TEST-(?:DHL|GLS)-\\d+)/i)?.[1] ?? null;\n\nlet antwortentwurf = \"\";\nlet interne_aufgabe = \"\";\nlet naechster_schritt = \"\";\n\n// First handle missing data, errors and access restrictions.\nif (d.pruefstatus === \"bestellnummer_fehlt\") {\n  antwortentwurf = \"Vielen Dank für Ihre Nachricht. Bitte teilen Sie uns Ihre Bestellnummer mit, damit wir Ihre Anfrage prüfen können.\";\n  interne_aufgabe = \"Anfrage ohne Bestellnummer prüfen.\";\n  naechster_schritt = \"Bestellnummer beim Kunden anfragen.\";\n\n} else if (d.pruefstatus === \"technischer_fehler\") {\n  antwortentwurf = \"Vielen Dank für Ihre Nachricht. Wir können den Bestellstatus aktuell wegen eines technischen Problems nicht prüfen. Unser Kundenservice wird die Anfrage bearbeiten.\";\n  interne_aufgabe = `Technischen Fehler bei ${nr} prüfen. Bestellstatus nicht verfügbar.`;\n  naechster_schritt = \"Technischen Fehler prüfen, danach Bestellung erneut abfragen.\";\n\n} else if (d.pruefstatus === \"bestellung_nicht_gefunden\") {\n  antwortentwurf = \"Vielen Dank für Ihre Nachricht. Wir konnten die angegebene Bestellnummer nicht finden. Bitte prüfen Sie die Nummer.\";\n  interne_aufgabe = `Bestellnummer ${nr} konnte nicht gefunden werden. Anfrage prüfen.`;\n  naechster_schritt = \"Bestellnummer prüfen lassen.\";\n\n} else if (d.pruefstatus === \"nicht_berechtigt\") {\n  antwortentwurf = \"Vielen Dank für Ihre Anfrage. Bevor wir Bestelldaten mitteilen können, muss unser Kundenservice Ihre Anfrage prüfen.\";\n  interne_aufgabe = `Absender und Bestellung ${nr} stimmen nicht überein. Identität prüfen.`;\n  naechster_schritt = \"Absender prüfen. Keine Bestelldaten herausgeben.\";\n\n} else if (d.pruefstatus !== \"berechtigt\" || !order) {\n  antwortentwurf = \"Vielen Dank für Ihre Anfrage. Unser Kundenservice prüft Ihr Anliegen und meldet sich bei Ihnen.\";\n  interne_aufgabe = `Unklare oder fehlende Daten für ${nr} prüfen.`;\n  naechster_schritt = \"Daten manuell prüfen.\";\n\n} else {\n\n  // Only authorised requests reach these templates.\n  switch (d.anliegen) {\n\n    case \"versandstatus\":\n      if (/Versandstatus:\\s*unterwegs/i.test(order)) {\n        antwortentwurf = `Ihre Bestellung ${nr} wurde versendet und ist laut unseren Daten unterwegs.${tracking ? ` Die Sendungsnummer lautet ${tracking}.` : \"\"} Ein bestätigter Liefertermin liegt uns nicht vor.`;\n      } else if (/noch kein Versand hinterlegt/i.test(order)) {\n        antwortentwurf = `Für Ihre Bestellung ${nr} ist noch kein Versand hinterlegt. Einen Liefertermin können wir aktuell nicht bestätigen.`;\n      } else {\n        antwortentwurf = \"Vielen Dank für Ihre Anfrage. Wir prüfen den Versandstatus Ihrer Bestellung.\";\n        interne_aufgabe = `Versandstatus für ${nr} prüfen.`;\n      }\n      naechster_schritt = \"Antwortentwurf prüfen und freigeben.\";\n      break;\n\n    case \"teillieferung\":\n      if (/Nur der Filter ist versendet/i.test(order) &&\n          /Schläuche ist kein Versand hinterlegt/i.test(order)) {\n        antwortentwurf = `Bei Ihrer Bestellung ${nr} wurde der Filter versendet.${tracking ? ` Die Sendungsnummer lautet ${tracking}.` : \"\"} Für die zwei Schläuche ist noch kein Versand hinterlegt. Ob alle Artikel zusammen ankommen, können wir nicht bestätigen.`;\n      } else {\n        antwortentwurf = \"Vielen Dank für Ihre Anfrage. Wir prüfen die einzelnen Artikel Ihrer Bestellung.\";\n      }\n      interne_aufgabe = `Offene Artikel und Teillieferung für ${nr} prüfen.`;\n      naechster_schritt = \"Versand der restlichen Artikel prüfen.\";\n      break;\n\n    case \"zustellung_bestritten\":\n      antwortentwurf = `Laut unseren Versanddaten ist die Sendung zu ${nr} als zugestellt markiert. Wir nehmen Ihren Hinweis ernst und prüfen den Fall.`;\n      interne_aufgabe = `Kunde hat Sendung ${nr} nicht erhalten. Zustellung prüfen.${tracking ? ` Tracking: ${tracking}.` : \"\"}`;\n      naechster_schritt = \"Zustellung mit Versanddienstleister prüfen.\";\n      break;\n\n    case \"storno_erstattung\":\n      antwortentwurf = `Wir haben Ihre Anfrage zur Stornierung und Erstattung für ${nr} erhalten. Unser Kundenservice prüft die Anfrage. Wir können eine Stornierung oder Erstattung aktuell nicht bestätigen.`;\n      interne_aufgabe = `Storno und Erstattung für ${nr} prüfen. Keine automatische Ausführung.`;\n      naechster_schritt = \"Bestellstatus und Freigabe prüfen.\";\n      break;\n\n    case \"bestelldaten_anfragen\":\n      antwortentwurf = \"Vielen Dank für Ihre Anfrage. Unser Kundenservice prüft, welche Bestelldaten wir Ihnen mitteilen können.\";\n      interne_aufgabe = `Anfrage zu Bestelldaten für ${nr} prüfen.`;\n      naechster_schritt = \"Erlaubte Daten prüfen und Antwort freigeben.\";\n      break;\n\n    default:\n      antwortentwurf = \"Vielen Dank für Ihre Nachricht. Unser Kundenservice prüft Ihr Anliegen.\";\n      interne_aufgabe = `Unbekanntes Anliegen zu ${nr} prüfen.`;\n      naechster_schritt = \"Anliegen manuell prüfen.\";\n  }\n}\n\n// Suspicious customer text must not control system actions.\nif (d.manipulationsverdacht === true) {\n  interne_aufgabe = [\n    interne_aufgabe,\n    \"Verdächtige Anweisung in der Nachricht prüfen. Keine Daten ändern.\"\n  ].filter(Boolean).join(\" \");\n  naechster_schritt = \"Sicherheitsprüfung und Antwortfreigabe.\";\n}\n\nreturn {\n  json: {\n    ...d,\n    antwortentwurf,\n    interne_aufgabe,\n    naechster_schritt,\n    pruefung_noetig: true,\n    status: \"vorbereitet\"\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3584,
+        -1088
+      ],
+      "id": "1afaaf28-c601-47b7-92b2-a53f0cfddd56",
+      "name": "Antwort und Aufgabe erstellen"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst d = $json;\nconst fehler = [];\n\nconst pflichtfelder = [\n  \"eingangs_id\",\n  \"nachrichten_id\",\n  \"absender\",\n  \"anliegen\",\n  \"pruefstatus\",\n  \"antwortentwurf\",\n  \"naechster_schritt\",\n  \"datenquelle\"\n];\n\n// 1. Check required fields.\nfor (const feld of pflichtfelder) {\n  if (typeof d[feld] !== \"string\" || !d[feld].trim()) {\n    fehler.push(`${feld} fehlt oder ist leer`);\n  }\n}\n\n// 2. Human review must be required.\nif (d.pruefung_noetig !== true) {\n  fehler.push(\"Mitarbeiterprüfung fehlt\");\n}\n\nif (d.status !== \"vorbereitet\") {\n  fehler.push(\"Ungültiger Bearbeitungsstatus\");\n}\n\n// 3. Protect customer information.\nif (d.pruefstatus !== \"berechtigt\") {\n  if (d.autorisiert !== false) {\n    fehler.push(\"Unberechtigte Anfrage ist nicht gesperrt\");\n  }\n\n  if (d.datenstand != null) {\n    fehler.push(\"Private Bestelldaten bei unberechtigter Anfrage\");\n  }\n\n  if (!String(d.interne_aufgabe ?? \"\").trim()) {\n    fehler.push(\"Interne Prüfaufgabe fehlt\");\n  }\n\n  if (/TEST-(DHL|GLS)-\\d+/i.test(d.antwortentwurf)) {\n    fehler.push(\"Sendungsnummer ohne Berechtigung\");\n  }\n}\n\n// 4. Tracking numbers must come from order data.\nconst tracking = d.antwortentwurf.match(/TEST-(DHL|GLS)-\\d+/gi) ?? [];\n\nfor (const nummer of tracking) {\n  if (!d.autorisiert ||\n      !String(d.datenstand ?? \"\").includes(nummer)) {\n    fehler.push(\"Sendungsnummer nicht durch Daten belegt\");\n  }\n}\n\n// 5. Sensitive cases require internal tasks.\nif (\n  d.autorisiert &&\n  [\"storno_erstattung\", \"zustellung_bestritten\", \"teillieferung\"]\n    .includes(d.anliegen) &&\n  !String(d.interne_aufgabe ?? \"\").trim()\n) {\n  fehler.push(\"Interne Aufgabe für wichtigen Fall fehlt\");\n}\n\nif (\n  d.manipulationsverdacht === true &&\n  !String(d.interne_aufgabe ?? \"\").includes(\"Verdächtige\")\n) {\n  fehler.push(\"Sicherheitsprüfung fehlt\");\n}\n\n// 6. Stop if any validation fails.\nif (fehler.length > 0) {\n  throw new Error(\n    \"Ergebnisprüfung fehlgeschlagen: \" + fehler.join(\"; \")\n  );\n}\n\nreturn {\n  json: {\n    ...d,\n    pruefergebnis: \"bestanden\"\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3408,
+        -1328
+      ],
+      "id": "2f4d2faa-ebaf-484d-93ea-6718b08a1f04",
+      "name": "Ergebnis prüfen"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "Zatn6n6KWY51Q5wu",
+          "mode": "list",
+          "cachedResultName": "verarbeitete_nachrichten",
+          "cachedResultUrl": "/projects/cjuF39mXT91RWHWq/datatables/Zatn6n6KWY51Q5wu"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nachrichten_id": "={{ $json.nachrichten_id }}",
+            "eingangs_id": "={{ $json.eingangs_id }}",
+            "absender": "={{ $json.absender }}",
+            "bestellnummer": "={{ $json.bestellnummer }}",
+            "anliegen": "={{ $json.anliegen }}",
+            "antwortentwurf": "={{ $json.antwortentwurf }}",
+            "interne_aufgabe": "={{ $json.interne_aufgabe }}",
+            "datenquelle": "={{ $json.datenquelle }}",
+            "pruefung_noetig": "={{ $json.pruefung_noetig }}",
+            "naechster_schritt": "={{ $json.naechster_schritt }}",
+            "status": "={{ $json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nachrichten_id",
+              "displayName": "nachrichten_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "eingangs_id",
+              "displayName": "eingangs_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "absender",
+              "displayName": "absender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "bestellnummer",
+              "displayName": "bestellnummer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "anliegen",
+              "displayName": "anliegen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "antwortentwurf",
+              "displayName": "antwortentwurf",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "interne_aufgabe",
+              "displayName": "interne_aufgabe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "datenquelle",
+              "displayName": "datenquelle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "pruefung_noetig",
+              "displayName": "pruefung_noetig",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "naechster_schritt",
+              "displayName": "naechster_schritt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -3088,
+        -1040
+      ],
+      "id": "20b57c55-f094-4f2f-bd6f-24b1aa714a91",
+      "name": "Ergebnis speichern"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Testlauf starten": {
+      "main": [
+        [
+          {
+            "node": "Kundenanfragen laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kundenanfragen laden": {
+      "main": [
+        [
+          {
+            "node": "Nachrichten einzeln bearbeiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nachrichten einzeln bearbeiten": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Neue Nachricht prüfen (Actual duplicate Lookup)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Neue Nachricht prüfen (Actual duplicate Lookup)": {
+      "main": [
+        [
+          {
+            "node": "Ist die Nachricht neu?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ist die Nachricht neu?": {
+      "main": [
+        [
+          {
+            "node": "Bestellnummer erkennen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nachrichten einzeln bearbeiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bestellnummer erkennen": {
+      "main": [
+        [
+          {
+            "node": "Bestelldaten suchen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bestelldaten suchen": {
+      "main": [
+        [
+          {
+            "node": "Kundendaten und Bestellung prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kundendaten und Bestellung prüfen": {
+      "main": [
+        [
+          {
+            "node": "Anliegen erkennen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anliegen erkennen": {
+      "main": [
+        [
+          {
+            "node": "Antwort und Aufgabe erstellen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Antwort und Aufgabe erstellen": {
+      "main": [
+        [
+          {
+            "node": "Ergebnis prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ergebnis prüfen": {
+      "main": [
+        [
+          {
+            "node": "Ergebnis speichern",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ergebnis speichern": {
+      "main": [
+        [
+          {
+            "node": "Nachrichten einzeln bearbeiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b24a34ef-e017-4008-badd-f6c9df1ae8d9",
+  "meta": {
+    "instanceId": "58a80065c9af30664adf0a6db38d275a3ef8557ee640284a91f060ac18e2bda1"
+  },
+  "id": "AyZHrPgxp1SQetOT",
+  "tags": []
+}

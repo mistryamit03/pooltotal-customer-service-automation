@@ -1,0 +1,44 @@
+[
+  {
+    "bestellnummer": "TEST-1001",
+    "kundenadresse": "max@kunde.example",
+    "kanal": "JTL-Shop",
+    "datenstand": "1 Poolpumpe bestellt und versendet. Versandstatus: unterwegs. Tracking: TEST-DHL-1001.",
+    "abfrage_status": "ok"
+  },
+  {
+    "bestellnummer": "TEST-1002",
+    "kundenadresse": "lea@kunde.example",
+    "kanal": "Amazon",
+    "datenstand": "1 Filter und 2 Schläuche bestellt. Nur der Filter ist versendet. Tracking: TEST-GLS-1002. Für die Schläuche ist kein Versand hinterlegt.",
+    "abfrage_status": "ok"
+  },
+  {
+    "bestellnummer": "TEST-1003",
+    "kundenadresse": "nora@kunde.example",
+    "kanal": "eBay",
+    "datenstand": "1 Poolabdeckung bestellt und versendet. Versandstatus: unterwegs. Tracking: TEST-DHL-1003.",
+    "abfrage_status": "ok"
+  },
+  {
+    "bestellnummer": "TEST-1004",
+    "kundenadresse": null,
+    "kanal": null,
+    "datenstand": "Der Bestell-Lookup liefert einen technischen Timeout. Es stehen keine Bestelldaten zur Verfügung.",
+    "abfrage_status": "timeout"
+  },
+  {
+    "bestellnummer": "TEST-1005",
+    "kundenadresse": "mia@kunde.example",
+    "kanal": "Kaufland",
+    "datenstand": "1 Kescher bestellt und versendet. Versandstatus: zugestellt. Tracking: TEST-DHL-1005.",
+    "abfrage_status": "ok"
+  },
+  {
+    "bestellnummer": "TEST-1006",
+    "kundenadresse": "paul@kunde.example",
+    "kanal": "JTL-Shop",
+    "datenstand": "1 Saunaduft bestellt und bezahlt. Bestellstatus: offen. Noch kein Versand hinterlegt.",
+    "abfrage_status": "ok"
+  }
+]

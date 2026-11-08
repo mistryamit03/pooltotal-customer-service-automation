@@ -1,0 +1,15 @@
+[
+  {
+    "eingangs_id": "E10",
+    "nachrichten_id": "M10",
+    "absender": "max@kunde.example",
+    "bestellnummer": null,
+    "anliegen": "versandstatus",
+    "antwortentwurf": "Vielen Dank für Ihre Nachricht. Bitte teilen Sie uns Ihre Bestellnummer mit, damit wir Ihre Anfrage prüfen können.",
+    "interne_aufgabe": "Anfrage ohne Bestellnummer prüfen.",
+    "datenquelle": "keine Bestellnummer angegeben",
+    "pruefung_noetig": true,
+    "naechster_schritt": "Bestellnummer beim Kunden anfragen.",
+    "status": "vorbereitet"
+  }
+]
