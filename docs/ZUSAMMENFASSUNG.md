@@ -80,7 +80,7 @@ Der Workflow erkennt fehlende oder auffällige Adressdaten und erstellt eine Auf
 
 ## Zeitaufwand und KI-Nutzung
 
-**Zeitaufwand:** Bisher ca. **45–48 Stunden** für Planung, Aufbau des Workflows, Fehlersuche, Tests, Dokumentation und Vorbereitung der Bildschirmdemo (Stand: 08.11.2026; die Aufnahme selbst ist nicht eingerechnet).
+**Zeitaufwand:** Insgesamt ca. **48 Stunden** für Planung, Aufbau des Workflows, Fehlersuche, Tests, Dokumentation und Bildschirmdemo.
 
 **KI-Unterstützung:** Ich habe ChatGPT für die Planung, Hilfe bei JavaScript-Code und n8n, Fehlersuche, Testplanung, Prüfung von Screenshots, Dokumentation und die finale Kontrolle genutzt.
 
