@@ -59,7 +59,9 @@ flowchart LR
 
 ## Kurze Live-Demo
 
-Die Videoaufnahme wird als Link ergänzt, sobald die Aufnahme fertig und geprüft ist. Gezeigt werden Ablauf, Normalfall E01 und Problemfall E04.
+[Video-Demonstration auf Google Drive ansehen](https://drive.google.com/file/d/15lpHQvSSpDqw-LYM1QYuJjZ9X86n3ghn/view?usp=sharing)
+
+Die Aufnahme zeigt den n8n-Workflow, den Normalfall E01 und den Problemfall E04. Zwei gespeicherte Testergebnisse wurden für die Live-Demo zurückgesetzt und erneut verarbeitet.
 
 ## Datenschutz
 
